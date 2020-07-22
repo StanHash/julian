@@ -16,17 +16,31 @@ constexpr char const* const KEY_OPTION_OUTPUT_SHORT = "o";
 constexpr char const* const KEY_OPTION_SEGMENTS_SHORT = "m";
 constexpr char const* const KEY_OPTION_SYMBOLS_SHORT = "s";
 
+constexpr char const* const KEY_FLAG_BRK = "fbrk";
+constexpr char const* const KEY_FLAG_AUTO_SYMBOLS = "fauto-symbols";
+constexpr char const* const KEY_FLAG_PRINT_INPUT_SYMBOLS = "fprint-input-symbols";
+
 void print_usage(std::ostream& out, std::string_view program_name)
 {
     out << "Usage: " << program_name << " <binary> <address> [options]" << std::endl;
     out << std::endl;
+
     out << "Options:" << std::endl;
     out << "  -o, --output <output>" << std::endl;
-    out << "      sets main output file [default: stdout]" << std::endl;
+    out << "      sets main output file. [default: stdout]" << std::endl;
     out << "  -m, --segments <segment.csv>" << std::endl;
     out << "      defines the input segment table." << std::endl;
     out << "  -s, --symbols <symbols.csv>" << std::endl;
     out << "      defines the input symbol table." << std::endl;
+    out << std::endl;
+
+    out << "Flags:" << std::endl;
+    out << "  -fbrk" << std::endl;
+    out << "      allow BRK instructions to be analysed." << std::endl;
+    out << "  -fauto-symbols" << std::endl;
+    out << "      generate symbols for all addresses." << std::endl;
+    out << "  -fprint-input-symbols" << std::endl;
+    out << "      print input symbols alongside analysed ones." << std::endl;
     out << std::endl;
 }
 
@@ -38,9 +52,12 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    AnalConfig anal;
+    AnalConfig anal {};
 
     std::optional<std::string> opt_output_file;
+
+    bool flag_auto_symbols = false;
+    bool flag_print_input_symbols = false;
 
     try
     {
@@ -55,6 +72,10 @@ int main(int argc, char** argv)
             },
             {
                 // Flags
+
+                KEY_FLAG_BRK,
+                KEY_FLAG_AUTO_SYMBOLS,
+                KEY_FLAG_PRINT_INPUT_SYMBOLS,
             },
             {
                 // Aliases
@@ -321,6 +342,17 @@ int main(int argc, char** argv)
                 return 10;
             }
         }
+
+        // Parse flags
+
+        if (args.flags.count(KEY_FLAG_BRK))
+            anal.allow_brk = true;
+
+        if (args.flags.count(KEY_FLAG_AUTO_SYMBOLS))
+            flag_auto_symbols = true;
+
+        if (args.flags.count(KEY_FLAG_PRINT_INPUT_SYMBOLS))
+            flag_print_input_symbols = true;
     }
     catch (ArgError const& e)
     {
@@ -361,9 +393,17 @@ int main(int argc, char** argv)
     std::sort(anal.symbols.begin(), anal.symbols.end(), Symbol::Compare {});
 
     std::vector<AddressBlock> const blocks = analyse_code_blocks(anal);
-    std::vector<Symbol> const symbols = merge_sorted_vectors(anal.symbols, build_symbols(anal, blocks));
+
+    std::vector<Symbol> const new_symbols = build_symbols(anal, blocks, flag_auto_symbols);
+    std::vector<Symbol> const symbols = merge_sorted_vectors(anal.symbols, new_symbols);
 
     std::vector<PrintItem> const print = gen_print_items(anal.main_block, blocks, symbols);
+
+    const auto do_print = [&] (std::ostream& output)
+    {
+        print_symbols(anal.main_block, flag_print_input_symbols ? symbols : new_symbols, output);
+        print_items(anal.main_block, print, symbols, output);
+    };
 
     if (opt_output_file.has_value())
     {
@@ -378,11 +418,11 @@ int main(int argc, char** argv)
             return 11;
         }
 
-        print_items(anal.main_block, print, symbols, output);
+        do_print(output);
     }
     else
     {
-        print_items(anal.main_block, print, symbols, std::cout);
+        do_print(std::cout);
     }
 
     return 0;

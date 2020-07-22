@@ -35,3 +35,4 @@ using PrintItem = std::variant<PrintCode, PrintData, PrintName>;
 
 std::vector<PrintItem> gen_print_items(AddressBlock const& range, std::vector<AddressBlock> const& code_blocks, std::vector<Symbol> const& symbols);
 void print_items(DataBlock const& main_block, std::vector<PrintItem> const& items, std::vector<Symbol> const& symbols, std::ostream& output);
+void print_symbols(AddressBlock const& main_block, std::vector<Symbol> const& symbols, std::ostream& output);

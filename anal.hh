@@ -25,7 +25,9 @@ struct AnalConfig : public OpInfoCache
 
     std::vector<Segment> segments;
     std::vector<Symbol> symbols;
+
+    bool allow_brk : 1;
 };
 
 std::vector<AddressBlock> analyse_code_blocks(AnalConfig const& ctx);
-std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlock> const& blocks);
+std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlock> const& blocks, bool extended_symbols);

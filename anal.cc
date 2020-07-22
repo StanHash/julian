@@ -90,10 +90,9 @@ static std::optional<AddressBlock> scan_code(AnalConfig const& anal, AddressBloc
             return {};
         }
 
-        if (info->mnemonic == Mnem::BRK)
+        if (info->mnemonic == Mnem::BRK && !anal.allow_brk)
         {
             // We assume BRKs are invalid
-            // TODO: make this behavior a cli option
 
             std::cerr << "Invalidated " << hex_string<4>(range.start) << ": BRK is not allowed." << std::endl;
 
@@ -482,18 +481,18 @@ std::vector<AddressBlock> analyse_code_blocks(AnalConfig const& anal)
     return result;
 }
 
-std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlock> const& blocks)
+std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlock> const& blocks, bool extended_symbols)
 {
     std::vector<Symbol> result;
 
     auto const sym_compare = [] (Symbol const& l, Symbol const& r)
     {
-        return (l.value == r.value) && (l.flags == r.flags);
+        return (l.value == r.value);
     };
 
     auto const add_symbol = [&] (std::string&& name, std::uint16_t val, std::uint8_t flags)
     {
-        if (!anal.main_block.contains(val))
+        if (!extended_symbols && !anal.main_block.contains(val))
             return;
 
         Symbol symbol { std::move(name), val, flags };
@@ -502,7 +501,7 @@ std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlo
 
         for (auto it = anal_symbols.first; it != anal_symbols.second; ++it)
         {
-            if (sym_compare(*it, symbol))
+            if (it->value == symbol.value && it->flags == symbol.flags)
                 return;
         }
 

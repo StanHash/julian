@@ -339,3 +339,16 @@ void print_items(DataBlock const& main_block, std::vector<PrintItem> const& item
         }, item);
     }
 }
+
+void print_symbols(AddressBlock const& main_block, std::vector<Symbol> const& symbols, std::ostream& output)
+{
+    for (Symbol const& symbol : symbols)
+    {
+        if (main_block.contains(symbol.value))
+            continue;
+
+        output << "    " << symbol.name << " = $" << hex_string<4>(symbol.value) << std::endl;
+    }
+
+    output << std::endl;
+}
