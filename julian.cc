@@ -366,8 +366,8 @@ int main(int argc, char** argv)
 
     if (anal.segments.empty())
     {
-        anal.segments.push_back({ 0x0000, 0x8000, "ALL1", Segment::FLAG_READ | Segment::FLAG_WRITE | Segment::FLAG_EXEC });
-        anal.segments.push_back({ 0x8000, 0x8000, "ALL2", Segment::FLAG_READ | Segment::FLAG_WRITE | Segment::FLAG_EXEC });
+        anal.segments.push_back({ { 0x0000, 0x8000 }, "ALL1", Segment::FLAG_READ | Segment::FLAG_WRITE | Segment::FLAG_EXEC });
+        anal.segments.push_back({ { 0x8000, 0x8000 }, "ALL2", Segment::FLAG_READ | Segment::FLAG_WRITE | Segment::FLAG_EXEC });
     }
 
     if (anal.main_block.contains(0xFFFA) && anal.main_block.contains(0xFFFF))

@@ -38,6 +38,9 @@ struct DataBlock
 
     inline SpanScanner bytes(AddressBlock const& block) const
     {
+        if (block.start < address || block.start + block.size > address + data.size())
+            throw std::logic_error(std::string("This is a bug! Found block at ") + hex_string<4>(block.start) + " of size " + hex_string<4>(block.size));
+
         return SpanScanner::from_vector(data, block.start - address, block.size);
     }
 };

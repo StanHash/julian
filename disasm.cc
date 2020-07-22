@@ -39,11 +39,8 @@ std::vector<AddressBlock> inverted_blocks(AddressBlock const& range, std::vector
 
     for (AddressBlock const& block : blocks)
     {
-        std::uint16_t const new_start = start;
-        std::uint16_t const new_size = block.start - start;
-
-        if (new_size > 0)
-            result.push_back({ new_start, new_size });
+        if (block.start > start)
+            result.push_back({ start, (std::uint16_t) (block.start - start) });
 
         start = block.start + block.size;
 

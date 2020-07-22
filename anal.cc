@@ -81,7 +81,7 @@ static std::optional<AddressBlock> scan_code(AnalConfig const& anal, AddressBloc
         std::uint8_t const opcode = bytes.consume();
         OpInfo const* info = anal.get_opcode_info(opcode);
 
-        if (info == nullptr || (bytes.tell() + get_addressing_mode_operand_size(info->addressing_mode)) > 0x4000)
+        if (info == nullptr || (bytes.tell() + get_addressing_mode_operand_size(info->addressing_mode)) > bytes.last())
         {
             // Illegal instruction: block isn't valid
 
@@ -155,7 +155,9 @@ static std::optional<AddressBlock> scan_code(AnalConfig const& anal, AddressBloc
         }
 
         if (info->flags & OpInfo::FLAG_JUMP)
+        {
             return AddressBlock { range.start, (std::uint16_t) bytes.tell() };
+        }
     }
 
     std::cerr << "Invalidated " << hex_string<4>(range.start) << ": reached end of analysis range." << std::endl;
@@ -391,6 +393,24 @@ static bool remove_bad_jump_blocks(AnalConfig const& anal, std::vector<AddressBl
             Instr const instr = decode_instruction(addr, bytes);
             OpInfo const* const info = get_instr_info(instr, anal);
 
+            auto const remove = [&] ()
+            {
+                // invalidate block up to now
+
+                std::uint16_t const new_start = anal.main_block.address + bytes.tell();
+
+                block.size -= new_start - block.start;
+                block.start = new_start;
+
+                start_offset = new_start - anal.main_block.address;
+            };
+
+            if (info == nullptr)
+            {
+                remove();
+                continue;
+            }
+
             if (info->flags & OpInfo::FLAG_JUMP)
             {
                 switch (info->addressing_mode)
@@ -401,15 +421,8 @@ static bool remove_bad_jump_blocks(AnalConfig const& anal, std::vector<AddressBl
                     if (anal.main_block.contains(instr.operand) && !in_sorted_vector(all_code_points, instr.operand))
                     {
                         // invalidate block up to now
-
                         std::cerr << "Removed " << hex_string<4>(block.start) << ": " << hex_string<4>(instr.operand) << " is bad jump target." << std::endl;
-
-                        std::uint16_t const new_start = anal.main_block.address + bytes.tell();
-
-                        block.size -= new_start - block.start;
-                        block.start = new_start;
-
-                        start_offset = new_start - anal.main_block.address;
+                        remove();
                     }
 
                     break;
