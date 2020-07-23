@@ -7,6 +7,12 @@ std::string instr_to_string(Instr const& instr, std::vector<Symbol> const& symbo
 
     OpInfo const* const info = find_opcode_info(instr.opcode);
 
+    if (info == nullptr)
+    {
+        using namespace std::string_literals;
+        return ".db $"s + hex_string<2>(instr.opcode);
+    }
+
     // Step 2. get operand string
 
     std::string operand_str = {};

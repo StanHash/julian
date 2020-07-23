@@ -338,10 +338,20 @@ OpInfo const* get_instr_info(Instr const& instr, OpInfoCache const& cache)
 
 std::size_t get_instr_size(Instr const& instr)
 {
-    return 1 + get_addressing_mode_operand_size(get_instr_info(instr)->addressing_mode);
+    OpInfo const* const info = get_instr_info(instr);
+
+    if (info == nullptr)
+        return 1;
+
+    return 1 + get_addressing_mode_operand_size(info->addressing_mode);
 }
 
 std::size_t get_instr_size(Instr const& instr, OpInfoCache const& cache)
 {
-    return 1 + get_addressing_mode_operand_size(get_instr_info(instr, cache)->addressing_mode);
+    OpInfo const* const info = get_instr_info(instr, cache);
+
+    if (info == nullptr)
+        return 1;
+
+    return 1 + get_addressing_mode_operand_size(info->addressing_mode);
 }
