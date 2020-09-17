@@ -218,7 +218,7 @@ std::vector<PrintItem> gen_print_items(AddressBlock const& range, std::vector<Ad
 
     struct Item { Kind kind; std::string name; };
 
-    std::vector<std::pair<std::int16_t, Item>> map;
+    std::vector<std::pair<std::uint32_t, Item>> map;
 
     for (AddressBlock const& code_block : code_blocks)
         map.emplace_back(code_block.start, Item { Kind::Code, {} });
