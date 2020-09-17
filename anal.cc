@@ -5,7 +5,7 @@
 
 #include <iostream> // FIXME: remove this and use a Log class instead
 
-static bool is_valid_jump_target(AnalConfig const& anal, std::uint16_t address)
+static bool is_valid_jump_target(AnalConfig const& anal, std::uint32_t address)
 {
     auto const symbols = symbols_at(anal.symbols, address);
 
@@ -26,7 +26,7 @@ static bool is_valid_jump_target(AnalConfig const& anal, std::uint16_t address)
     return false;
 }
 
-static bool is_valid_read_target(AnalConfig const& anal, std::uint16_t address)
+static bool is_valid_read_target(AnalConfig const& anal, std::uint32_t address)
 {
     auto const symbols = symbols_at(anal.symbols, address);
 
@@ -47,7 +47,7 @@ static bool is_valid_read_target(AnalConfig const& anal, std::uint16_t address)
     return false;
 }
 
-static bool is_valid_write_target(AnalConfig const& anal, std::uint16_t address)
+static bool is_valid_write_target(AnalConfig const& anal, std::uint32_t address)
 {
     auto const symbols = symbols_at(anal.symbols, address);
 
@@ -76,7 +76,7 @@ static std::optional<AddressBlock> scan_code(AnalConfig const& anal, AddressBloc
 
     while (bytes.tell() < bytes.last())
     {
-        std::uint16_t const addr = range.start + bytes.tell();
+        std::uint32_t const addr = range.start + bytes.tell();
 
         std::uint8_t const opcode = bytes.consume();
         OpInfo const* info = anal.get_opcode_info(opcode);
@@ -156,7 +156,7 @@ static std::optional<AddressBlock> scan_code(AnalConfig const& anal, AddressBloc
 
         if (info->flags & OpInfo::FLAG_JUMP)
         {
-            return AddressBlock { range.start, (std::uint16_t) bytes.tell() };
+            return AddressBlock { range.start, (std::uint32_t) bytes.tell() };
         }
     }
 
@@ -165,13 +165,13 @@ static std::optional<AddressBlock> scan_code(AnalConfig const& anal, AddressBloc
     return {};
 }
 
-static std::vector<std::uint16_t> list_code_points(AnalConfig const& anal, std::vector<AddressBlock> const& blocks)
+static std::vector<std::uint32_t> list_code_points(AnalConfig const& anal, std::vector<AddressBlock> const& blocks)
 {
-    std::vector<std::uint16_t> result;
+    std::vector<std::uint32_t> result;
 
     for (AddressBlock const& block : blocks)
     {
-        for_each_instr(anal.main_block.bytes(block), block, [&] (std::uint16_t addr, [[maybe_unused]] Instr const& instr)
+        for_each_instr(anal.main_block.bytes(block), block, [&] (std::uint32_t addr, [[maybe_unused]] Instr const& instr)
         {
             result.push_back(addr);
         });
@@ -180,13 +180,13 @@ static std::vector<std::uint16_t> list_code_points(AnalConfig const& anal, std::
     return result;
 }
 
-static std::vector<std::uint16_t> list_code_xrefs(AnalConfig const& anal, std::vector<AddressBlock> const& blocks)
+static std::vector<std::uint32_t> list_code_xrefs(AnalConfig const& anal, std::vector<AddressBlock> const& blocks)
 {
-    std::vector<std::uint16_t> result;
+    std::vector<std::uint32_t> result;
 
     for (AddressBlock const& block : blocks)
     {
-        for_each_instr(anal.main_block.bytes(block), block, [&] ([[maybe_unused]] std::uint16_t addr, Instr const& instr)
+        for_each_instr(anal.main_block.bytes(block), block, [&] ([[maybe_unused]] std::uint32_t addr, Instr const& instr)
         {
             OpInfo const* info = get_instr_info(instr, anal);
 
@@ -211,10 +211,10 @@ static std::vector<std::uint16_t> list_code_xrefs(AnalConfig const& anal, std::v
     return result;
 }
 
-static std::vector<AddressBlock> scan_code_at_points(AnalConfig const& anal, std::vector<AddressBlock> const& ranges, std::vector<std::uint16_t> const& scan_points)
+static std::vector<AddressBlock> scan_code_at_points(AnalConfig const& anal, std::vector<AddressBlock> const& ranges, std::vector<std::uint32_t> const& scan_points)
 {
     std::vector<AddressBlock> result;
-    std::set<std::uint16_t> scanned;
+    std::set<std::uint32_t> scanned;
 
     std::size_t i = 0;
 
@@ -229,8 +229,8 @@ static std::vector<AddressBlock> scan_code_at_points(AnalConfig const& anal, std
             {
                 std::cerr << "Begin scan at point " << hex_string<4>(scan_points[i]) << std::endl;
 
-                std::uint16_t addr = scan_points[i];
-                std::uint16_t max_len = range.size - (addr - range.start);
+                std::uint32_t addr = scan_points[i];
+                std::uint32_t max_len = range.size - (addr - range.start);
 
                 while (addr < range.start + range.size)
                 {
@@ -245,7 +245,7 @@ static std::vector<AddressBlock> scan_code_at_points(AnalConfig const& anal, std
 
                     bool at_end = false;
 
-                    for_each_instr(anal.main_block.bytes(opt_block.value()), opt_block.value(), [&] ([[maybe_unused]] std::uint16_t addr, Instr const& instr)
+                    for_each_instr(anal.main_block.bytes(opt_block.value()), opt_block.value(), [&] ([[maybe_unused]] std::uint32_t addr, Instr const& instr)
                     {
                         OpInfo const* info = get_instr_info(instr, anal);
 
@@ -272,13 +272,13 @@ static std::vector<AddressBlock> find_code_blocks_using_symbols(AnalConfig const
 {
     std::vector<AddressBlock> result;
 
-    std::set<std::uint16_t> analysed_points;
+    std::set<std::uint32_t> analysed_points;
 
-    auto const get_new_points = [&] (std::vector<AddressBlock> const& analysed_blocks) -> std::vector<std::uint16_t>
+    auto const get_new_points = [&] (std::vector<AddressBlock> const& analysed_blocks) -> std::vector<std::uint32_t>
     {
-        std::vector<std::uint16_t> xrefs = list_code_xrefs(anal, analysed_blocks);
+        std::vector<std::uint32_t> xrefs = list_code_xrefs(anal, analysed_blocks);
 
-        xrefs.erase(std::remove_if(xrefs.begin(), xrefs.end(), [&] (std::uint16_t xref)
+        xrefs.erase(std::remove_if(xrefs.begin(), xrefs.end(), [&] (std::uint32_t xref)
         {
             if (!range.contains(xref))
                 return true;
@@ -300,7 +300,7 @@ static std::vector<AddressBlock> find_code_blocks_using_symbols(AnalConfig const
         return xrefs;
     };
 
-    std::vector<std::uint16_t> current_points;
+    std::vector<std::uint32_t> current_points;
 
     for (Symbol const& symbol : anal.symbols)
     {
@@ -331,12 +331,12 @@ static std::vector<AddressBlock> find_code_blocks_linearly(AnalConfig const& ana
 
     std::cerr << "Begin linear scan at " << hex_string<4>(range.start) << std::endl;
 
-    std::uint16_t current_offset = 0;
+    std::uint32_t current_offset = 0;
 
     while (current_offset < range.size)
     {
-        std::uint16_t const start = range.start + current_offset;
-        std::uint16_t const size = range.size - current_offset;
+        std::uint32_t const start = range.start + current_offset;
+        std::uint32_t const size = range.size - current_offset;
 
         std::optional<AddressBlock> const opt_block = scan_code(anal, { start, size });
 
@@ -371,7 +371,7 @@ static std::vector<AddressBlock> find_code_blocks_linearly(AnalConfig const& ana
     return result;
 }
 
-static bool remove_bad_jump_blocks(AnalConfig const& anal, std::vector<AddressBlock>& blocks, std::vector<std::uint16_t> const& all_code_points)
+static bool remove_bad_jump_blocks(AnalConfig const& anal, std::vector<AddressBlock>& blocks, std::vector<std::uint32_t> const& all_code_points)
 {
     std::vector<AddressBlock> result;
     result.reserve(blocks.size());
@@ -382,13 +382,13 @@ static bool remove_bad_jump_blocks(AnalConfig const& anal, std::vector<AddressBl
 
     for (AddressBlock block : blocks)
     {
-        std::uint16_t start_offset = block.start - anal.main_block.address;
+        std::uint32_t start_offset = block.start - anal.main_block.address;
 
         bytes.seek(start_offset);
 
         while (bytes.tell() - start_offset < block.size)
         {
-            std::uint16_t const addr = anal.main_block.address + bytes.tell();
+            std::uint32_t const addr = anal.main_block.address + bytes.tell();
 
             Instr const instr = decode_instruction(addr, bytes);
             OpInfo const* const info = get_instr_info(instr, anal);
@@ -397,7 +397,7 @@ static bool remove_bad_jump_blocks(AnalConfig const& anal, std::vector<AddressBl
             {
                 // invalidate block up to now
 
-                std::uint16_t const new_start = anal.main_block.address + bytes.tell();
+                std::uint32_t const new_start = anal.main_block.address + bytes.tell();
 
                 block.size -= new_start - block.start;
                 block.start = new_start;
@@ -418,7 +418,7 @@ static bool remove_bad_jump_blocks(AnalConfig const& anal, std::vector<AddressBl
 
                 case Am::REL:
                 case Am::ABS:
-                    if (anal.main_block.contains(instr.operand) && !in_sorted_vector(all_code_points, instr.operand))
+                    if (anal.main_block.contains(instr.operand) && !in_sorted_vector(all_code_points, (std::uint32_t) instr.operand))
                     {
                         // invalidate block up to now
                         std::cerr << "Removed " << hex_string<4>(block.start) << ": " << hex_string<4>(instr.operand) << " is bad jump target." << std::endl;
@@ -452,7 +452,7 @@ static bool remove_isolated_blocks(AnalConfig const& anal, std::vector<AddressBl
 
     for (std::size_t i = 0; i < blocks.size(); ++i)
     {
-        std::uint16_t const size = blocks[i].size;
+        std::uint32_t const size = blocks[i].size;
 
         if (size < 12) // TODO: this could be configurable
         {
@@ -483,7 +483,7 @@ std::vector<AddressBlock> analyse_code_blocks(AnalConfig const& anal)
     std::vector<AddressBlock> linear_blocks = find_code_blocks_linearly(anal, inverted_blocks(anal.main_block, result));
     result = merge_sorted_vectors(result, linear_blocks);
 
-    std::vector<std::uint16_t> code_points;
+    std::vector<std::uint32_t> code_points;
 
     do
     {
@@ -503,7 +503,7 @@ std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlo
         return (l.value == r.value);
     };
 
-    auto const add_symbol = [&] (std::string&& name, std::uint16_t val, std::uint8_t flags)
+    auto const add_symbol = [&] (std::string&& name, std::uint32_t val, std::uint8_t flags)
     {
         if (!extended_symbols && !anal.main_block.contains(val))
             return;
@@ -523,7 +523,7 @@ std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlo
 
     for (AddressBlock const& block : blocks)
     {
-        for_each_instr(anal.main_block.bytes(block), block, [&] ([[maybe_unused]] std::uint16_t addr, Instr const& instr)
+        for_each_instr(anal.main_block.bytes(block), block, [&] ([[maybe_unused]] std::uint32_t addr, Instr const& instr)
         {
             OpInfo const* const info = anal.get_opcode_info(instr.opcode);
 
@@ -541,22 +541,40 @@ std::vector<Symbol> build_symbols(AnalConfig const& anal, std::vector<AddressBlo
             case Am::REL:
                 if (info->flags & OpInfo::FLAG_JUMP)
                 {
-                    add_symbol(std::string("LOC_") + hex_string<4>(instr.operand), instr.operand, Symbol::FLAG_EXEC);
+                    add_symbol(std::string("CODE_") + hex_string<4>(instr.operand), instr.operand, Symbol::FLAG_EXEC);
                     break;
                 }
 
                 [[fallthrough]];
 
             case Am::IAB:
-                if (info->flags & OpInfo::FLAG_WRITE)
+            {
+                using flags_t = decltype(Symbol::flags);
+
+                flags_t flags = (info->flags & OpInfo::FLAG_WRITE)
+                    ? Symbol::FLAG_WRITE : Symbol::FLAG_READ;
+
+                for (Segment const& segment : anal.segments)
                 {
-                    add_symbol(std::string("DAT_") + hex_string<4>(instr.operand), instr.operand, Symbol::FLAG_WRITE);
+                    if (!segment.contains(instr.operand))
+                        continue;
+
+                    if (segment.flags & Segment::FLAG_EXEC)
+                        flags |= Symbol::FLAG_EXEC;
+
+                    if (segment.flags & Segment::FLAG_READ)
+                        flags |= Symbol::FLAG_READ;
+
+                    if (segment.flags & Segment::FLAG_WRITE)
+                        flags |= Symbol::FLAG_WRITE;
+
+                    break;
                 }
-                else
-                {
-                    add_symbol(std::string("DAT_") + hex_string<4>(instr.operand), instr.operand, Symbol::FLAG_READ);
-                }
+
+                add_symbol(std::string("DATA_") + hex_string<4>(instr.operand), instr.operand, flags);
+
                 break;
+            }
 
             default:
                 break;

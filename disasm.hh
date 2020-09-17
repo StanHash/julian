@@ -7,10 +7,10 @@
 
 struct AddressBlock
 {
-    std::uint16_t start;
-    std::uint16_t size;
+    std::uint32_t start;
+    std::uint32_t size;
 
-    constexpr bool contains(std::uint16_t address) const
+    constexpr bool contains(std::uint32_t address) const
     {
         return address >= start && address <= start + (size - 1);
     }
@@ -23,17 +23,17 @@ struct AddressBlock
 
 struct DataBlock
 {
-    std::uint16_t address;
+    std::uint32_t address;
     std::vector<byte_type> data;
 
-    constexpr bool contains(std::uint16_t address) const
+    constexpr bool contains(std::uint32_t address) const
     {
         return address >= this->address && address <= this->address + (data.size() - 1);
     }
 
     operator AddressBlock () const
     {
-        return { address, (std::uint16_t) data.size() };
+        return { address, (std::uint32_t) data.size() };
     }
 
     inline SpanScanner bytes(AddressBlock const& block) const
@@ -45,7 +45,7 @@ struct DataBlock
     }
 };
 
-bool address_blocks_contain(std::vector<AddressBlock> const& blocks, std::uint16_t address);
+bool address_blocks_contain(std::vector<AddressBlock> const& blocks, std::uint32_t address);
 
 std::vector<AddressBlock> inverted_blocks(AddressBlock const& range, std::vector<AddressBlock> const& blocks);
 
@@ -57,7 +57,7 @@ static void for_each_instr(ByteScanner&& bytes, AddressBlock const& block, Func 
 {
     while (bytes.tell() < bytes.last())
     {
-        std::uint16_t const addr = block.start + bytes.tell();
+        std::uint32_t const addr = block.start + bytes.tell();
         func(addr, decode_instruction(addr, bytes));
     }
 }

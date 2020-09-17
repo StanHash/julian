@@ -1,7 +1,7 @@
 
 #include "disasm.hh"
 
-bool address_blocks_contain(std::vector<AddressBlock> const& blocks, std::uint16_t address)
+bool address_blocks_contain(std::vector<AddressBlock> const& blocks, std::uint32_t address)
 {
     // Variant of binary search
     // Assumes `blocks` is sorted and has no overlaps
@@ -35,12 +35,12 @@ std::vector<AddressBlock> inverted_blocks(AddressBlock const& range, std::vector
 {
     std::vector<AddressBlock> result;
 
-    std::uint16_t start = range.start;
+    std::uint32_t start = range.start;
 
     for (AddressBlock const& block : blocks)
     {
         if (block.start > start)
-            result.push_back({ start, (std::uint16_t) (block.start - start) });
+            result.push_back({ start, (std::uint32_t) (block.start - start) });
 
         start = block.start + block.size;
 
@@ -50,8 +50,8 @@ std::vector<AddressBlock> inverted_blocks(AddressBlock const& range, std::vector
 
     if (start < range.start + range.size)
     {
-        std::uint16_t const new_start = start;
-        std::uint16_t const new_size = range.start + range.size - start;
+        std::uint32_t const new_start = start;
+        std::uint32_t const new_size = range.start + range.size - start;
 
         result.push_back({ new_start, new_size });
     }

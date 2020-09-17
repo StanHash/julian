@@ -249,8 +249,8 @@ std::vector<PrintItem> gen_print_items(AddressBlock const& range, std::vector<Ad
 
     for (std::size_t i = 0; i < map.size(); ++i)
     {
-        std::uint16_t const addr = map[i].first;
-        std::uint16_t const size = [&] ()
+        std::uint32_t const addr = map[i].first;
+        std::uint32_t const size = [&] ()
         {
             if (i+1 == map.size())
                 return range.start + range.size - addr;
@@ -301,7 +301,7 @@ void print_items(DataBlock const& main_block, std::vector<PrintItem> const& item
 
             if constexpr (std::is_same_v<T, PrintCode>)
             {
-                for_each_instr(main_block.bytes(item), item, [&] (std::uint16_t addr, Instr const& instr)
+                for_each_instr(main_block.bytes(item), item, [&] (std::uint32_t addr, Instr const& instr)
                 {
                     auto const first = main_block.data.begin() + (addr - main_block.address);
                     auto const last  = main_block.data.begin() + (addr + get_instr_size(instr) - main_block.address);

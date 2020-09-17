@@ -13,7 +13,7 @@ struct Symbol
     };
 
     std::string name;
-    std::uint16_t value;
+    std::uint32_t value;
     std::uint8_t flags;
 
     constexpr bool operator < (Symbol const& other) const
@@ -28,19 +28,19 @@ struct Symbol
             return l.value < r.value;
         }
 
-        constexpr bool operator () (Symbol const& l, std::uint16_t r) const
+        constexpr bool operator () (Symbol const& l, std::uint32_t r) const
         {
             return l.value < r;
         }
 
-        constexpr bool operator () (std::uint16_t l, Symbol const& r) const
+        constexpr bool operator () (std::uint32_t l, Symbol const& r) const
         {
             return l < r.value;
         }
     };
 };
 
-inline auto symbols_at(std::vector<Symbol> const& symbols, std::uint16_t address)
+inline auto symbols_at(std::vector<Symbol> const& symbols, std::uint32_t address)
 {
     return std::equal_range(symbols.begin(), symbols.end(), address, Symbol::Compare {});
 }

@@ -75,8 +75,8 @@ int main(int argc, char** argv)
                 Segment segment {};
 
                 segment.name = record[0];
-                segment.start = hex_decode<std::uint16_t>(record[1]);
-                segment.size = hex_decode<std::uint16_t>(record[2]);
+                segment.start = hex_decode<std::uint32_t>(record[1]);
+                segment.size = hex_decode<std::uint32_t>(record[2]);
 
                 for (char c : record[3])
                 {
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
                 Symbol symbol {};
 
                 symbol.name = record[0];
-                symbol.value = hex_decode<std::uint16_t>(record[1]);
+                symbol.value = hex_decode<std::uint32_t>(record[1]);
 
                 for (char c : record[2])
                 {
@@ -201,10 +201,7 @@ int main(int argc, char** argv)
     anal.allow_brk = args.flag_brk;
 
     if (anal.segments.empty())
-    {
-        anal.segments.push_back({ { 0x0000, 0x8000 }, "ALL1", Segment::FLAG_READ | Segment::FLAG_WRITE | Segment::FLAG_EXEC });
-        anal.segments.push_back({ { 0x8000, 0x8000 }, "ALL2", Segment::FLAG_READ | Segment::FLAG_WRITE | Segment::FLAG_EXEC });
-    }
+        anal.segments.push_back({ { 0, 0x10000 }, "ALL", Segment::FLAG_READ | Segment::FLAG_WRITE | Segment::FLAG_EXEC });
 
     if (anal.main_block.contains(0xFFFA) && anal.main_block.contains(0xFFFF))
     {
@@ -220,7 +217,7 @@ int main(int argc, char** argv)
             std::uint8_t const lo = anal.main_block.data[0xFFFA - anal.main_block.address + 2*i + 0];
             std::uint8_t const hi = anal.main_block.data[0xFFFA - anal.main_block.address + 2*i + 1];
 
-            std::uint16_t const val = lo | (hi << 8);
+            std::uint32_t const val = lo | (hi << 8);
 
             anal.symbols.push_back({ vector_value_names[i], val, Symbol::FLAG_EXEC });
         }
