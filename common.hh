@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 
+#define JULIAN_VERSION_STRING "1.0"
+
 using byte_type = std::uint8_t;
 
 template<unsigned DigitCount, typename IntType = unsigned>

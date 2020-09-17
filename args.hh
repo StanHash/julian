@@ -1,30 +1,25 @@
 
 #pragma once
 
-#include "common.hh"
-
-#include <stdexcept>
-
-#include <unordered_set>
-#include <unordered_map>
-
-struct ArgError : public std::runtime_error
-{
-    using std::runtime_error::runtime_error;
-};
-
-struct ArgsConfig
-{
-    std::unordered_set<std::string_view> option_keys;
-    std::unordered_set<std::string_view> flag_keys;
-    std::unordered_map<std::string_view, std::string_view> aliases;
-};
+#include <cstdint>
+#include <optional>
+#include <string_view>
 
 struct Args
 {
-    std::vector<std::string_view> positionals;
-    std::unordered_map<std::string_view, std::string_view> options;
-    std::unordered_set<std::string_view> flags;
+    std::string_view input_filename;
+    std::size_t input_offset;
+    std::size_t input_size;
+
+    std::uint32_t base_address;
+
+    std::optional<std::string_view> opt_output_file;
+    std::optional<std::string_view> opt_segment_file;
+    std::optional<std::string_view> opt_symbol_file;
+
+    bool flag_brk : 1;
+    bool flag_auto_symbols : 1;
+    bool flag_print_input_symbols : 1;
 };
 
-Args parse_args(ArgsConfig const& config, int argc, char const* const* argv);
+Args parse_args(int argc, char** argv);
